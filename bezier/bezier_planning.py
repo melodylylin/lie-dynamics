@@ -6,7 +6,7 @@ from pathlib import Path
 from zipfile import ZipFile
 import os
 import datetime
-from TimeOptBez import *
+from .TimeOptBez import *
 
 
 class Bezier:

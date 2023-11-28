@@ -1,7 +1,7 @@
 import casadi as ca
 
-from matrix_lie_group import MatrixLieGroup
-from util import series_dict
+from lie.matrix_lie_group import MatrixLieGroup
+from lie.util import series_dict
 
 
 # see: https://ethaneade.com/lie.pdf

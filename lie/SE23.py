@@ -1,96 +1,119 @@
 import casadi as ca
-#from pyecca.lie import so3, se3
+from .so3 import *
+import math
 
-from util import series_dict
-from matrix_lie_group import MatrixLieGroup
-from so3 import Quat, Euler, Mrp, Dcm
-import so3
+from lie.util import series_dict
+from lie.matrix_lie_group import MatrixLieGroup
+from .so3 import Quat, Euler, Mrp, Dcm
 
 
-class _SE3(MatrixLieGroup):
+class _SE23(MatrixLieGroup):
     def __init__(self, SO3=None):
         if SO3 == None:
             self.SO3 = Dcm
         else:
             self.SO3 = SO3
         super().__init__(
-            group_params=3 + self.SO3.group_params,
-            algebra_params=3 + self.SO3.algebra_params,
-            group_shape=(4, 4),
+            group_params= 6 + self.SO3.group_params,
+            algebra_params= 6 + self.SO3.algebra_params,
+            group_shape=(5, 5),
         )
 
     def matrix(self, v): # SE3 Lie Group matrix from 6x1 vector
-        theta = v[3:6]
+        theta = v[6:9]
         R = Dcm.from_euler(theta)
-        p = ca.SX(3, 1)
-        p[0, 0] = v[0]
-        p[1, 0] = v[1]
-        p[2, 0] = v[2]
+        p = ca.SX(3, 2)
+        p[0, 0] = v[3]
+        p[1, 0] = v[4]
+        p[2, 0] = v[5]
+        p[0, 1] = v[0]
+        p[1, 1] = v[1]
+        p[2, 1] = v[2]
         horz = ca.horzcat(R, p)
-        lastRow = ca.SX([0, 0, 0, 1]).T
-        return ca.vertcat(horz, lastRow)
+        lastRow1 = ca.SX([0, 0, 0, 1, 0]).T
+        lastRow2 = ca.SX([0, 0, 0, 0, 1]).T
+        return ca.vertcat(horz, lastRow1, lastRow2)
     
-    def vector(self, X): # 6x1 vector from SE3 Lie Group matrix
-        v = ca.SX(6,1)
+    def vector(self, X): # 9x1 vector from SE3 Lie Group matrix
+        v = ca.SX(9,1)
         R = X[0:3, 0:3]
         theta = Euler.from_dcm(R)
-        p = X[0:3,3]
-        v = ca.vertcat(p,theta)
-        return v
-    
-    def Ad_matrix(self, v): # Ad matrix of v(6x1) for SE3 Lie Group
-        Ad_SE3 = ca.SX(6,6)
-        theta = v[3:6]
-        R = Dcm.from_euler(theta)
-        px = ca.SX(3,3)
-        px[0,1] = -v[2]
-        px[0,2] = v[1]
-        px[1,0] = v[2]
-        px[1,2] = -v[0]
-        px[2,0] = -v[1]
-        px[2,1] = v[0]
-        horz1 = ca.horzcat(R, ca.mtimes(px, R))
-        horz2 = ca.horzcat(ca.SX(3,3), R)
-        Ad_SE3 = ca.vertcat(horz1, horz2)
-        return Ad_SE3
+        p = X[0:3,4]
+        v = X[0:3,3]
+        x = ca.vertcat(p,v,theta)
+        return x
+
+    def adC_matrix(self):
+        adC = ca.SX(9,9)
+        adC[0, 3] = 1
+        adC[1, 4] = 1
+        adC[2, 5] = 1
+
+        return adC
+
 
     def ad_matrix(self, v):
         """
-        takes 6x1 lie algebra
-        input vee operator [x,y,z,theta1,theta2,theta3]
+        takes 9x1 lie algebra
+        input vee operator [x,y,z,vx,vy,vz,theta1,theta2,theta3]
         """
-        ad_se3 = ca.SX(6, 6)
-        ad_se3[0, 1] = -v[5]
-        ad_se3[0, 2] = v[3]
-        ad_se3[0, 4] = -v[2]
-        ad_se3[0, 5] = v[1]
-        ad_se3[1, 0] = v[5]
-        ad_se3[1, 2] = -v[3]
-        ad_se3[1, 3] = v[2]
-        ad_se3[1, 5] = -v[0]
-        ad_se3[2, 0] = -v[4]
-        ad_se3[2, 1] = v[3]
-        ad_se3[2, 3] = -v[1]
-        ad_se3[2, 4] = v[0]
-        ad_se3[3, 4] = -v[5]
-        ad_se3[3, 5] = v[4]
-        ad_se3[4, 3] = v[5]
-        ad_se3[4, 5] = -v[3]
-        ad_se3[5, 3] = -v[4]
-        ad_se3[5, 4] = v[3]
+        x = v[0]
+        y = v[1]
+        z = v[2]
+        vx = v[3]
+        vy = v[4]
+        vz = v[5]
+        theta1 = v[6]
+        theta2 = v[7]
+        theta3 = v[8]
+
+        ad_se3 = ca.SX(9, 9)
+        ad_se3[0, 1] = -theta3
+        ad_se3[0, 2] = theta2
+        ad_se3[1, 0] = theta3
+        ad_se3[1, 2] = -theta1
+        ad_se3[2, 0] = -theta2
+        ad_se3[2, 1] = theta1
+        ad_se3[0, 7] = -z
+        ad_se3[0, 8] = y
+        ad_se3[1, 6] = z
+        ad_se3[1, 8] = -x
+        ad_se3[2, 6] = -y
+        ad_se3[2, 7] = x
+        ad_se3[3, 4] = -theta3
+        ad_se3[3, 5] = theta2
+        ad_se3[4, 3] = theta3
+        ad_se3[4, 5] = -theta1
+        ad_se3[5, 3] = -theta2
+        ad_se3[5, 4] = theta1
+        ad_se3[3, 7] = -vz
+        ad_se3[3, 8] = vy
+        ad_se3[4, 6] = vz
+        ad_se3[4, 8] = -vx
+        ad_se3[5, 6] = -vy
+        ad_se3[5, 7] = vx
+        ad_se3[6, 7] = -theta3
+        ad_se3[6, 8] = theta2
+        ad_se3[7, 6] = theta3
+        ad_se3[7, 8] = -theta1
+        ad_se3[8, 6] = -theta2
+        ad_se3[8, 7] = theta1
         return ad_se3
 
     def vee(self, X):
         """
         This takes in an element of the SE3 Lie Group (Wedge Form) and returns the se3 Lie Algebra elements
         """
-        v = ca.SX(6, 1)
-        v[0, 0] = X[0, 3]  # x
-        v[1, 0] = X[1, 3]  # y
-        v[2, 0] = X[2, 3]  # z
-        v[3, 0] = X[2, 1]  # theta0
-        v[4, 0] = X[0, 2]  # theta1
-        v[5, 0] = X[1, 0]  # theta2
+        v = ca.SX(9, 1)
+        v[0, 0] = X[0, 4]  # x
+        v[1, 0] = X[1, 4]  # y
+        v[2, 0] = X[2, 4]  # z
+        v[3, 0] = X[0, 3]  # vx
+        v[4, 0] = X[1, 3]  # vy
+        v[5, 0] = X[2, 3]  # vz
+        v[6, 0] = X[2, 1]  # theta0
+        v[7, 0] = X[0, 2]  # theta1
+        v[8, 0] = X[1, 0]  # theta2
         return v
 
     def wedge(self, v):
@@ -99,18 +122,21 @@ class _SE3(MatrixLieGroup):
 
         v: [x,y,z,theta0,theta1,theta2]
         """
-        X = ca.SX.zeros(4, 4)
-        X[0, 3] = v[0]
-        X[1, 3] = v[1]
-        X[2, 3] = v[2]
-        X[:3, :3] = Dcm.wedge(v[3:6])
+        X = ca.SX.zeros(5, 5)
+        X[0, 4] = v[0]
+        X[1, 4] = v[1]
+        X[2, 4] = v[2]
+        X[0, 3] = v[3]
+        X[1, 3] = v[4]
+        X[2, 3] = v[5]
+        X[:3, :3] = Dcm.wedge(v[6:9])
         return X
 
     def exp(self, v):  # accept input in wedge operator form
         v = self.vee(v)
         # v = [x,y,z,theta1,theta2,theta3]
         v_so3 = v[
-            3:6
+            6:9
         ]  # grab only rotation terms for so3 uses ##corrected to v_so3 = v[3:6]
         X_so3 = Dcm.wedge(v_so3)  # wedge operator for so3
         theta = ca.norm_2(
@@ -118,10 +144,13 @@ class _SE3(MatrixLieGroup):
         )  # theta term using norm for sqrt(theta1**2+theta2**2+theta3**2)
 
         # translational components u
-        u = ca.SX(3, 1)
-        u[0, 0] = v[0]
-        u[1, 0] = v[1]
-        u[2, 0] = v[2]
+        u = ca.SX(3, 2)
+        u[0, 0] = v[3]
+        u[1, 0] = v[4]
+        u[2, 0] = v[5]
+        u[0, 1] = v[0]
+        u[1, 1] = v[1]
+        u[2, 1] = v[2]
 
         R = Dcm.exp(
             v_so3
@@ -135,12 +164,13 @@ class _SE3(MatrixLieGroup):
 
         horz = ca.horzcat(R, ca.mtimes(V, u))
 
-        lastRow = ca.SX([0, 0, 0, 1]).T
+        lastRow1 = ca.SX([0, 0, 0, 1, 0]).T
+        lastRow2 = ca.SX([0, 0, 0, 0, 1]).T
 
-        return ca.vertcat(horz, lastRow)
+        return ca.vertcat(horz, lastRow1, lastRow2)
 
     def identity(self):
-        return ca.SX.eye(4)
+        return ca.SX.eye(5)
 
     def product(self, a, b):
         self.check_group_shape(a)
@@ -148,11 +178,14 @@ class _SE3(MatrixLieGroup):
         return a @ b
 
     def inv(self, a):  # input a matrix of SX form from casadi
-        self.check_group_shape(a)
-        a_inv = ca.solve(
-            a, ca.SX.eye(6)
-        )  # Google Group post mentioned ca.inv() could take too long, and should explore solve function
-        return ca.transpose(a)
+        Rt = a[0:3, 0:3].T
+        vp = a[0:3, 3:5]
+        horz = ca.horzcat(Rt, -ca.mtimes(Rt, vp))
+
+        lastRow1 = ca.SX([0, 0, 0, 1, 0]).T
+        lastRow2 = ca.SX([0, 0, 0, 0, 1]).T
+        
+        return ca.vertcat(horz, lastRow1, lastRow2)
 
     def log(self, G):
         R = G[:3, :3]
@@ -166,35 +199,30 @@ class _SE3(MatrixLieGroup):
             + (1 / theta**2) * (1 - A / (2 * B)) * wSkew @ wSkew
         )
 
-        t = ca.SX(3, 1)
-        t[0] = G[0, 3]
-        t[1] = G[1, 3]
-        t[2] = G[2, 3]
+        t = ca.SX(3, 2)
+        t[0, :] = G[0, 3:5]
+        t[1, :] = G[1, 3:5]
+        t[2, :] = G[2, 3:5]
 
         uInv = V_inv @ t
         horz2 = ca.horzcat(wSkew, uInv)
-        lastRow2 = ca.SX([0, 0, 0, 0]).T
-        return ca.vertcat(horz2, lastRow2)
+        lastRow2 = ca.SX([0, 0, 0, 0, 0]).T
+        return ca.vertcat(horz2, lastRow2, lastRow2)
 
-    # def diff_correction_inv(self, v):  # U_inv of se3 input vee operator
-    #     # v = se3.vee(v)  #This only applies if v is inputed from Lie Group format
+    def diff_correction(self, v):  # U Matrix for se3 with input vee operator
+        return ca.inv(self.diff_correction_inv(v))
 
-    #     v_so3 = v[
-    #         3:6
-    #     ]  # grab only rotation terms for so3 uses ## changed to match NASAULI paper order of vee v[3:6]
-    #     X_so3 = so3.wedge(v_so3)  # wedge operator for so3
-    #     theta = ca.norm_2(
-    #         so3.vee(X_so3)
-    #     )  # theta term using norm for sqrt(theta1**2+theta2**2+theta3**2)
+    def diff_correction_inv(self, v):  # U_inv of se3 input vee operator
 
-    #     A = series_dict["sin(x)/x"]
-    #     B = series_dict["(1 - cos(x))/x^2"]
-    #     C = series_dict["(x - sin(x))/x^3"]
+        ad = self.ad_matrix(v)
+        ad_zeta_k = ca.SX_eye(9)
+        u_inv = ca.SX.eye(9)
 
-    #     ad = se3.ad_matrix(v)
-    #     I = ca.SX_eye(6)
-    #     u_inv = I + c2 * ad + c3 * se3.matmul(ad, ad)
-    #     return u_inv
+        for k in range(1, 10):
+            ad_zeta_k = ad_zeta_k@ad
+            u_inv += ad_zeta_k/math.factorial(k+1)
+
+        return u_inv
 
         # u_inv = ca.SX(6, 6)
         # u1 = c2*(-v[4]**2 - v[5]**2) + 1
@@ -267,7 +295,7 @@ class _SE3(MatrixLieGroup):
     # u matrix can be found through casadi using inverse function for casadi
 
 
-SE3Dcm = _SE3(Dcm)
-SE3Euler = _SE3(Euler)
-SE3Quat = _SE3(Quat)
-SE3Mrp = _SE3(Mrp)
+SE23Dcm = _SE23(Dcm)
+SE23Euler = _SE23(Euler)
+SE23Quat = _SE23(Quat)
+SE23Mrp = _SE23(Mrp)

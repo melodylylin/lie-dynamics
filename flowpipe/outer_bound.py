@@ -3,8 +3,8 @@ import picos
 import control
 import itertools
 import scipy
-from SE23 import *
-from se3 import *
+from lie.SE23 import *
+from lie.se3 import *
 
 def se23_solve_control(ax,ay,az,omega1,omega2,omega3):
     A = -ca.DM(SE23Dcm.ad_matrix(np.array([0,0,0,ax,ay,az,omega1,omega2,omega3]))+SE23Dcm.adC_matrix())
@@ -147,7 +147,7 @@ def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: 
     return R@points, val
 
 def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: omega, w2_norm: a
-    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu3']*w1_norm**2 + sol['mu2']*w2_norm**2)*(1-np.exp(-sol['alpha']*t))) # V(t)
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu3']*w1_norm**2 + sol['mu2']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.05 # V(t)
     # 1 = xT(P/V(t))x, equation for the ellipse
     P1 = sol['P']/val
     A1 = P1[:3,:3]
@@ -182,11 +182,11 @@ def inv_bound(sol, t, omegabound, abound, ebeta, ebeta_theta):
         exp_points = ca.DM(SE3Dcm.vector(SE3Dcm.exp(Lie_points)))
         exp_points = np.array(exp_points).reshape(6,)
         inv_points[:,i] = np.array([exp_points[0], exp_points[1], exp_points[2]])
-    xmax = inv_points[0,:].max()+0.05
-    ymax = inv_points[1,:].max()+0.05
-    zmax = inv_points[2,:].max()+0.05
-    xmin = inv_points[0,:].min()-0.05
-    ymin = inv_points[1,:].min()-0.05
-    zmin = inv_points[2,:].min()-0.05
+    xmax = inv_points[0,:].max()
+    ymax = inv_points[1,:].max()
+    zmax = inv_points[2,:].max()
+    xmin = inv_points[0,:].min()
+    ymin = inv_points[1,:].min()
+    zmin = inv_points[2,:].min()
     # due to the bound is obtained numerically, therefor, we set a small 
     return np.array([xmax,ymax,zmax,xmin,ymin,zmin])

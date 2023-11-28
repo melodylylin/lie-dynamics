@@ -1,11 +1,11 @@
 import numpy as np
 import casadi as ca
 import control
-from SE23 import *
-from multirotor_ref_traj import f_ref
+from lie.SE23 import *
+from .multirotor_ref_traj import f_ref
 from scipy import signal
 import matplotlib.pyplot as plt
-from bezier_planning import *
+from bezier.bezier_planning import *
 
 bezier6 = derive_bezier6()
 
@@ -73,7 +73,7 @@ def compute_control(t, y_vect, ref, freq_d, w1_mag, w2_mag, dist): # w1_mag: acc
     ref = f_ref(0, 0, 0, [r_vx, r_vy, r_vz], [r_ax, r_ay, r_az], [r_jx, r_jy, r_jz], [r_sx, r_sy, r_sz], 1, 9.8, 1, 1, 1, 0)
     R = np.array(ref[1])
     R_eb = np.linalg.inv(R) # earth frame to body frame
-    ae = np.array([r_ax,r_ay,r_az])
+    ae = np.array([r_ax,r_ay,r_az]) # acc in earth frame
     ab = R@ae
     omega = ref[2]
     omega = np.array(omega).reshape(3,)
@@ -90,23 +90,15 @@ def compute_control(t, y_vect, ref, freq_d, w1_mag, w2_mag, dist): # w1_mag: acc
 
     # disturbance
     if dist == 'sine':
-        phi = 0.8
+        phi = 0.3
         phi2 = 0.5
-        wax = np.cos(2*np.pi*freq_d*t+phi)*w1_mag/np.sqrt(2)
-        way = 0
-        waz = np.sin(2*np.pi*freq_d*t+phi)*w1_mag/np.sqrt(2)
+        wax = np.cos(2*np.pi*freq_d*t+phi)*w1_mag
+        way = np.sin(2*np.pi*freq_d*t+phi)*w1_mag/np.sqrt(2)
+        waz = np.sin(2*np.pi*freq_d*t+phi)*w1_mag
         womega1 = np.cos(2*np.pi*freq_d*t+phi2)*w2_mag/np.sqrt(2)
-        womega2 = 0
+        womega2 = np.sin(2*np.pi*freq_d*t+phi2)*w2_mag/np.sqrt(2)
         womega3 = np.sin(2*np.pi*freq_d*t+phi2)*w2_mag/np.sqrt(2)
     elif dist  == 'square':
-        # phi = 1
-        # phi2 = 0.8
-        # wax = np.cos(2*np.pi*freq_d*t+phi)*w1_mag
-        # way = np.sin(2*np.pi*freq_d*t+phi)*w1_mag/np.sqrt(2)
-        # waz = way
-        # womega1 = np.cos(2*np.pi*freq_d*t+phi2)*w2_mag
-        # womega2 = np.sin(2*np.pi*freq_d*t+phi2)*w2_mag
-        # womega3 = 0
         wax = signal.square(2*np.pi*freq_d*t+np.pi)*w1_mag/np.sqrt(2)
         way = signal.square(2*np.pi*freq_d*t)*w1_mag/2
         waz = signal.square(2*np.pi*freq_d*t)*w1_mag/2
@@ -188,6 +180,7 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
     
     label_added =False
     for f in freq:
+        print(f)
         res = simulate_rover(ref, f, abound, omegabound, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'sine')
         t = res['t']
     
@@ -197,7 +190,6 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
 
         # ressq = simulate_rover(ref, f, abound, omegabound, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'square')
         # tsq = ressq['t']
-    
         # y_vectsq = ressq['y']
         # exsq, eysq, ezsq, evxsq, evysq, evzsq, etheta1sq, etheta2sq, etheta3sq = [y_vectsq[i, :] for i in range(len(y_vectsq))]
         # exp_log_errsq = np.zeros((9,len(tsq)))
@@ -250,6 +242,8 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
             romega3.append(r_omega3)
             exp_log_err[:,j] = np.array([compute_exp_log_err(r_x, r_y, r_z, r_vx, r_vy, r_vz, r_theta1, r_theta2, r_theta3,
                                                             ex[j], ey[j], ez[j], evx[j], evy[j], evz[j], etheta1[j], etheta2[j], etheta3[j])])
+            # exp_log_errsq[:,j] = np.array([compute_exp_log_err(r_x, r_y, r_z, r_vx, r_vy, r_vz, r_theta1, r_theta2, r_theta3,
+            #                                                 exsq[j], eysq[j], ezsq[j], evxsq[j], evysq[j], evzsq[j], etheta1sq[j], etheta2sq[j], etheta3sq[j])])
     
         if not label_added:
             ax1.plot(t, exp_log_err[0,:], 'g', label='x',linewidth=0.7)
@@ -260,6 +254,10 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
             ax1.plot(t, exp_log_err[0,:], 'g',linewidth=0.7)
             ax2.plot(t, exp_log_err[1,:], 'g',linewidth=0.7)
             ax3.plot(t, exp_log_err[2,:], 'g',linewidth=0.7)
+            # ax1.plot(t, exp_log_errsq[0,:], 'g',linewidth=0.7)
+            # ax2.plot(t, exp_log_errsq[1,:], 'g',linewidth=0.7)
+            # ax3.plot(t, exp_log_errsq[2,:], 'g',linewidth=0.7)
+            
 
     t_vect = np.linspace(1e-5,np.cumsum(T0_list)[-1],80)
     ax1.plot(ref['T'], ref['traj_x'], 'r--', label='reference x')
