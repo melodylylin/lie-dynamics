@@ -173,6 +173,15 @@ def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: omega,
     points = np.array(points).T
     return R@points, val
 
+def exp_map(points, points_theta):
+    inv_points = np.zeros((3,points.shape[1]))
+    for i in range(points.shape[1]):
+        Lie_points = SE3Dcm.wedge(np.array([points[0,i], points[1,i], points[2,i], points_theta[0,i], points_theta[1,i], points_theta[2,i]]))
+        exp_points = ca.DM(SE3Dcm.vector(SE3Dcm.exp(Lie_points)))
+        exp_points = np.array(exp_points).reshape(6,)
+        inv_points[:,i] = np.array([exp_points[0], exp_points[1], exp_points[2]])
+    return inv_points
+
 def inv_bound(sol, t, omegabound, abound, ebeta, ebeta_theta):
     points, val = se23_invariant_set_points(sol, t, omegabound, abound, ebeta)
     points_theta, val = se23_invariant_set_points_theta(sol, t, omegabound, 0.5, ebeta_theta)
