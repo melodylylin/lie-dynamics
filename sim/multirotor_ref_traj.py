@@ -185,13 +185,13 @@ generator = ca.CodeGenerator(
         "prefix": "",
     },
 )
-generator.add(f_ref)
-script_path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-current_path = pathlib.Path(os.path.abspath(os.curdir))
-gen_path = script_path / "../src/generated"
-gen_path.mkdir(parents=True, exist_ok=True)
-os.chdir(gen_path)
-generator.generate()
-os.chdir(current_path)
+# generator.add(f_ref)
+# script_path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+# current_path = pathlib.Path(os.path.abspath(os.curdir))
+# gen_path = script_path / "../src/generated"
+# gen_path.mkdir(parents=True, exist_ok=True)
+# os.chdir(gen_path)
+# generator.generate()
+# os.chdir(current_path)
 
 # %%
