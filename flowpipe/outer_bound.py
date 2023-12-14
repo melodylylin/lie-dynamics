@@ -41,12 +41,7 @@ def SE23LMIs(alpha, A, B, verbosity=0):
                 [P2, 0, -alpha*mu2*np.eye(3), 0],
                 [P3, 0, 0, -alpha*mu3*np.eye(3)]])
         prob.add_constraint(block_eq1 << 0)
-    # block_eq1 = picos.block([
-    #             [A.T*P + P*A + alpha*P, P1.T, P2.T, P3.T],
-    #             [P1, -alpha*mu1*np.eye(3), 0, 0],
-    #             [P2, 0, -alpha*mu2*np.eye(3), 0],
-    #             [P3, 0, 0, -alpha*mu3*np.eye(3)]])
-    # prob.add_constraint(block_eq1 << 0)
+    prob.add_constraint(block_eq1 << 0)
     prob.add_constraint(P >> 1)
     prob.add_constraint(mu1 >> 1e-5)
     prob.add_constraint(mu2 >> 1e-5)
@@ -54,7 +49,7 @@ def SE23LMIs(alpha, A, B, verbosity=0):
     prob.set_objective('min', gam)
     try:
         prob.solve(solver="cvxopt", options={'verbosity': verbosity})
-        cost = mu1.value
+        cost = gam.value
     except Exception as e:
         print(e)
         cost = -1
@@ -68,12 +63,7 @@ def SE23LMIs(alpha, A, B, verbosity=0):
         'alpha':alpha    
         }
 
-def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, alpha_opt, verbosity=0):
-
-    # B_lie, K, BK, _ = se23_solve_control(0, 0, -9.8, 0, 0, 0)
-    # A0 = -ca.DM(SE23Dcm.ad_matrix(np.array([0,0,0,ax,ay,az,omega1,omega2,omega3]))+SE23Dcm.adC_matrix())
-    # A = np.array(A0+BK)
-    # eig = np.linalg.eig(A)[0]
+def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, verbosity=0):
 
     iterables =[omega1, omega2, omega3, ax, ay, az]
     nu = []
@@ -97,30 +87,30 @@ def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, alpha_opt, verbosity=
         A.append(Ai)
         eig.append(np.linalg.eig(Ai)[0])
     
-    # we use fmin to solve a line search problem in alpha for minimum gamma
     if verbosity > 0:
         print('line search')
-    # we perform a line search over alpha to find the largest convergence rate possible
-    alpha_1 = -np.real(np.max(eig)) # smallest magnitude value from eig-value, and range has to be positive
-    # if the alpha optimization fail, pick a fixed value for alpha.
-    # alpha_opt = 0.71#scipy.optimize.fminbound(lambda alpha: SE23LMIs(alpha, A, B_lie, verbosity=verbosity)['cost'], x1=1e-5, x2=alpha_1, disp=True if verbosity > 0 else False)
-    print(alpha_opt)
-    
-    sol = SE23LMIs(alpha_opt, A, B_lie)
-    prob = sol['prob']
-    print(prob.status)
-    if prob.status == 'optimal':
-        P = prob.variables['P'].value
-        mu1 =  prob.variables['mu_1'].value
-        if verbosity > 0:
-            print(sol)
-    else:
-        raise RuntimeError('Optimization failed')
+    # we perform a line search over alpha to find the feasible solution for LMIs
+    alpha_list = np.linspace(0.4,0.6,21)
+    for a in alpha_list:
+        print(a)
+        
+        sol = SE23LMIs(a, A, B_lie)
+        prob = sol['prob']
+        print(prob.status)
+        if prob.status == 'optimal':
+            P = prob.variables['P'].value
+            mu1 =  prob.variables['mu_1'].value
+            if verbosity > 0:
+                print(sol)
+            break
+        else:
+            print('Optimization failed, trying next alpha')
+            continue
         
     return sol
 
-def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: omega # w2_norm: a  
-    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu3']*w1_norm**2 + sol['mu2']*w2_norm**2)*(1-np.exp(-sol['alpha']*t))) # V(t)
+def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: a # w2_norm: omega  
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t))) # V(t)
     # 1 = xT(P/V(t))x, equation for the ellipse
     P1 = sol['P']/val
     A1 = P1[:6,:6]
@@ -146,8 +136,8 @@ def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: 
     points = np.array(points).T
     return R@points, val
 
-def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: omega, w2_norm: a
-    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu3']*w1_norm**2 + sol['mu2']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.05 # V(t)
+def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: a, w2_norm: omega
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.05 # V(t)
     # 1 = xT(P/V(t))x, equation for the ellipse
     P1 = sol['P']/val
     A1 = P1[:3,:3]
@@ -182,9 +172,9 @@ def exp_map(points, points_theta):
         inv_points[:,i] = np.array([exp_points[0], exp_points[1], exp_points[2]])
     return inv_points
 
-def inv_bound(sol, t, omegabound, abound, ebeta, ebeta_theta):
+def inv_bound(sol, t, omegabound, abound, ebeta):
     points, val = se23_invariant_set_points(sol, t, omegabound, abound, ebeta)
-    points_theta, val = se23_invariant_set_points_theta(sol, t, omegabound, 0.5, ebeta_theta)
+    points_theta, val = se23_invariant_set_points_theta(sol, t, omegabound, 0.5, ebeta)
     inv_points = np.zeros((3,points.shape[1]))
     for i in range(points.shape[1]):
         Lie_points = SE3Dcm.wedge(np.array([points[0,i], points[1,i], points[2,i], points_theta[0,i], points_theta[1,i], points_theta[2,i]]))

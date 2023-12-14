@@ -6,29 +6,25 @@ from lie.se3 import *
 from .IntervalHull import qhull2D, minBoundingRect
 from .outer_bound import se23_invariant_set_points, se23_invariant_set_points_theta, exp_map
 
-def flowpipes(ref, n, beta, w1, w2, omegabound, sol):
-    
-    # ref_theta = ref_data['theta']
+def flowpipes(ref, n, beta, w1, omegabound, sol):
 
     x_r = ref['traj_x']
     y_r = ref['traj_y']
     z_r = ref['traj_z']
     
-    nom = np.array([x_r,z_r]).T
+    nom = np.array([x_r,y_r]).T
     flowpipes = []
     intervalhull = []
     t_vect = []
-    Ry1 = []
-    Ry2 = []
     
-    steps0 = int(len(x_r)/n)
+    step0 = int(len(x_r)/n)
     
     a = 0    
     for i in range(n):
         if i < len(x_r)%n:
-            steps = steps0 + 1
+            steps = step0 + 1
         else:
-            steps = steps0
+            steps = step0
         b = a + steps
         if i == n-1:
             nom_i = nom[a:len(x_r)+1,:]
@@ -42,47 +38,20 @@ def flowpipes(ref, n, beta, w1, w2, omegabound, sol):
             
         t = 0.05*a
         t_vect.append(t)
-        ang_list = []
-        # for k in range(a, b):
-        #     if k == 0:
-        #         k = 1e-3
-        #     angle = ref_theta(0.05*k)
-        #     ang_list.append(angle)
         
-        # invariant set in se2
         if t == 0:
             t = 1e-3
-        points, val1 = se23_invariant_set_points(sol, t, omegabound, w1, beta) # invariant set at t0 in that time interval
-        points2, val2 = se23_invariant_set_points(sol, 0.05*b, omegabound, w1, beta) # invariant set at t final in that time interval
-        points_theta, _ = se23_invariant_set_points_theta(sol, t, omegabound, w2, beta)
+        points, val1 = se23_invariant_set_points(sol, t, w1, omegabound, beta) # invariant set at t0 in that time interval
+        points2, val2 = se23_invariant_set_points(sol, 0.05*b, w1, omegabound, beta) # invariant set at t final in that time interval
+        points_theta, _ = se23_invariant_set_points_theta(sol, t, w1, omegabound, beta)
         
         if val2 > val1: 
             points = points2
-            points_theta, _ = se23_invariant_set_points_theta(sol, 0.05*b, omegabound, w1, beta)
-        # lyap.append(val)
-        
-        # exp map (invariant set in Lie group) x, y, theta
-        # inv_points = np.zeros((3,points.shape[1]))
-        # for j in range(points.shape[1]):
-        #     # print(points[2,j])
-        #     # val = points2[:,j].T@sol['P']@points2[:,j]
-        #     # lyap.append(val)
-        #     exp_points = se2(points[0,j], points[1,j], points[2,j]).exp
-        #     inv_points[:,j] = np.array([exp_points.x, exp_points.y, exp_points.theta])
+            points_theta, _ = se23_invariant_set_points_theta(sol, 0.05*b, w1, omegabound, beta)
 
         inv_points = exp_map(points, points_theta)
 
-        inv_set = np.delete(inv_points,1,0)
-        
-        max_x = inv_set[0,:].max()
-        min_x = inv_set[0,:].min()
-        x_bound = np.sqrt(min_x**2 + max_x**2)
-        max_y = inv_set[1,:].max()
-        min_y = inv_set[1,:].min()
-        y_bound = np.sqrt(min_y**2 + max_y**2)
-        # max_z = inv_set[2,:].max()
-        # min_z = inv_set[2,:].min()
-        # z_bound = np.sqrt(min_z**2 + max_z**2)
+        inv_set = np.delete(inv_points,2,0) # we want to show x-z, delete y
             
         P2 = Polytope(inv_set.T) 
         
@@ -101,7 +70,7 @@ def flowpipes(ref, n, beta, w1, w2, omegabound, sol):
         intervalhull.append(P1.V)
         
         a = b
-    return flowpipes, intervalhull, nom, t_vect #, Ry1, Ry2
+    return flowpipes, intervalhull, nom, t_vect
 
 def plot_flowpipes(nom, flowpipes, n):
     # flow pipes
@@ -114,7 +83,7 @@ def plot_flowpipes(nom, flowpipes, n):
     # plt.axis('equal')
     plt.title('Flow Pipes')
     plt.xlabel('x')
-    plt.ylabel('z')
+    plt.ylabel('y')
     lgd = plt.legend(loc=2, prop={'size': 18})
     ax = lgd.axes
     handles, labels = ax.get_legend_handles_labels()

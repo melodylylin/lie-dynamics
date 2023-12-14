@@ -7,6 +7,8 @@ from zipfile import ZipFile
 import os
 import datetime
 from .TimeOptBez import *
+from sim.multirotor_ref_traj import f_ref
+from lie.SE23 import *
 
 
 class Bezier:
@@ -119,6 +121,9 @@ def generate_path(bc_t, k):
         'acc_z': [],
         'T': [],
         'T0': [],
+        'omega_1': [],
+        'omega_2': [],
+        'omega_3': []
     }
 
     for i in range(bc_t.shape[1]-1):
@@ -136,6 +141,45 @@ def generate_path(bc_t, k):
         ax = traj_x[:, 2]
         ay = traj_y[:, 2]
         az = traj_z[:, 2]
+        jx = traj_x[:, 3]
+        jy = traj_y[:, 3]
+        jz = traj_z[:, 3]
+        sx = traj_x[:, 4]
+        sy = traj_y[:, 4]
+        sz = traj_z[:, 4]
+
+        romega1 = []
+        romega2 = []
+        romega3 = []
+    
+        for j in range(100):
+            r_vx = vx[j]
+            r_vy = vy[j]
+            r_vz = vz[j]
+            r_ax = ax[j]
+            r_ay = ay[j]
+            r_az = az[j]
+            r_jx = jx[j]
+            r_jy = jy[j]
+            r_jz = jz[j]
+            r_sx = sx[j]
+            r_sy = sy[j]
+            r_sz = sz[j]
+            ref_v = f_ref(0, 0, 0, [r_vx, r_vy, r_vz], [r_ax, r_ay, r_az], [r_jx, r_jy, r_jz], [r_sx, r_sy, r_sz], 1, 9.8, 1, 1, 1, 0)
+            R = ref_v[1]
+            theta = ca.DM(Euler.from_dcm(R))
+            theta = np.array(theta).reshape(3,)
+            r_theta1 = theta[0]
+            r_theta2 = theta[1]
+            r_theta3 = theta[2]
+            omega = ref_v[2]
+            omega = np.array(omega).reshape(3,)
+            r_omega1 = omega[0]
+            r_omega2 = omega[1]
+            r_omega3 = omega[2]
+            romega1.append(r_omega1)
+            romega2.append(r_omega2)
+            romega3.append(r_omega3)
 
         res['anchor_x'].extend(np.array(Px).tolist())
         res['anchor_y'].extend(np.array(Py).tolist())
@@ -148,5 +192,8 @@ def generate_path(bc_t, k):
         res['acc_z'].extend(az)
         res['T'].extend(np.array(t).tolist())
         res['T0'].append(T0)
+        res['omega_1'].extend(np.array(romega1).tolist())
+        res['omega_2'].extend(np.array(romega2).tolist())
+        res['omega_3'].extend(np.array(romega3).tolist())
 
     return res

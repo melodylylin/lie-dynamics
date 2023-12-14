@@ -194,10 +194,6 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
         # exsq, eysq, ezsq, evxsq, evysq, evzsq, etheta1sq, etheta2sq, etheta3sq = [y_vectsq[i, :] for i in range(len(y_vectsq))]
         # exp_log_errsq = np.zeros((9,len(tsq)))
         
-        romega1 = []
-        romega2 = []
-        romega3 = []
-        refy = []
 
         for j in range(len(t)):
             for k in range(T.shape[0]):
@@ -211,7 +207,6 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
                     traj_z = np.array(bezier6['bezier6_traj'](t[j]-T[k-1], ref['T0'][k], Pz[k])).T
             r_x = traj_x[:,0][0]
             r_y = traj_y[:,0][0]
-            refy.append(r_y)
             r_z = traj_z[:,0][0]
             r_vx = traj_x[:,1][0]
             r_vy = traj_y[:,1][0]
@@ -234,12 +229,6 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
             r_theta3 = theta[2]
             omega = ref_v[2]
             omega = np.array(omega).reshape(3,)
-            r_omega1 = omega[0]
-            r_omega2 = omega[1]
-            r_omega3 = omega[2]
-            romega1.append(r_omega1)
-            romega2.append(r_omega2)
-            romega3.append(r_omega3)
             exp_log_err[:,j] = np.array([compute_exp_log_err(r_x, r_y, r_z, r_vx, r_vy, r_vz, r_theta1, r_theta2, r_theta3,
                                                             ex[j], ey[j], ez[j], evx[j], evy[j], evz[j], etheta1[j], etheta2[j], etheta3[j])])
             # exp_log_errsq[:,j] = np.array([compute_exp_log_err(r_x, r_y, r_z, r_vx, r_vy, r_vz, r_theta1, r_theta2, r_theta3,
@@ -286,4 +275,4 @@ def plot_rover_sim(freq, ref, abound, omegabound, invbound):
 
     # plt.savefig('figures/Inv_bound_s.eps', format='eps', bbox_inches='tight')
 
-    return romega1, romega2, romega3
+    return 
