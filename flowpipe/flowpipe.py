@@ -12,7 +12,9 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
     y_r = ref['traj_y']
     z_r = ref['traj_z']
     
-    nom = np.array([x_r,y_r]).T
+    #####NEED to change this if wants to show different axis#####
+    nom = np.array([x_r,z_r]).T
+
     flowpipes = []
     intervalhull = []
     t_vect = []
@@ -51,7 +53,8 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
 
         inv_points = exp_map(points, points_theta)
 
-        inv_set = np.delete(inv_points,2,0) # we want to show x-z, delete y
+        ######NEED TO change this if want to show other (0 for delete x, 1 for y, 2 for z)#######
+        inv_set = np.delete(inv_points,1,0) # we want to show x-z, delete y
             
         P2 = Polytope(inv_set.T) 
         
@@ -83,7 +86,7 @@ def plot_flowpipes(nom, flowpipes, n):
     # plt.axis('equal')
     plt.title('Flow Pipes')
     plt.xlabel('x')
-    plt.ylabel('y')
+    plt.ylabel('z')
     lgd = plt.legend(loc=2, prop={'size': 18})
     ax = lgd.axes
     handles, labels = ax.get_legend_handles_labels()

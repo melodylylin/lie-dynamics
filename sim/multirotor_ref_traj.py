@@ -161,30 +161,30 @@ res = f_ref(1, 0, 0, [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], 1, 9.8, 1, 1, 1
 res
 
 # c code generation
-generator = ca.CodeGenerator(
-    "gen_multirotor_ref_traj",
-    {
-        "verbose": True,
-        "verbose_runtime": False,
-        "mex": False,
-        "cpp": False,
-        "main": False,
-        "casadi_real": "double",
-        "casadi_int": "int",
-        "codegen_scalars": False,
-        "with_header": True,
-        "with_mem": False,
-        "with_export": False,
-        "with_import": False,
-        "include_math": True,
-        "infinity": "INFINITY",
-        "nan": "NAN",
-        "real_min": "",
-        "indent": 2,
-        "avoid_stack": False,
-        "prefix": "",
-    },
-)
+# generator = ca.CodeGenerator(
+#     "gen_multirotor_ref_traj",
+#     {
+#         "verbose": True,
+#         "verbose_runtime": False,
+#         "mex": False,
+#         "cpp": False,
+#         "main": False,
+#         "casadi_real": "double",
+#         "casadi_int": "int",
+#         "codegen_scalars": False,
+#         "with_header": True,
+#         "with_mem": False,
+#         "with_export": False,
+#         "with_import": False,
+#         "include_math": True,
+#         "infinity": "INFINITY",
+#         "nan": "NAN",
+#         "real_min": "",
+#         "indent": 2,
+#         "avoid_stack": False,
+#         "prefix": "",
+#     },
+# )
 # generator.add(f_ref)
 # script_path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 # current_path = pathlib.Path(os.path.abspath(os.curdir))
