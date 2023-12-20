@@ -6,6 +6,11 @@ from lie.se3 import *
 from .IntervalHull import qhull2D, minBoundingRect
 from .outer_bound import se23_invariant_set_points, se23_invariant_set_points_theta, exp_map
 
+def rotate_point(point, angle):
+    new_point = np.array([point[0] * np.cos(angle) - point[1] * np.sin(angle),
+                       point[0] * np.sin(angle) + point[1] * np.cos(angle)])
+    return new_point 
+
 def flowpipes(ref, n, beta, w1, omegabound, sol):
 
     x_r = ref['traj_x']
@@ -13,7 +18,7 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
     z_r = ref['traj_z']
     
     #####NEED to change this if wants to show different axis#####
-    nom = np.array([x_r,z_r]).T
+    nom = np.array([x_r,y_r]).T
 
     flowpipes = []
     intervalhull = []
@@ -54,7 +59,13 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
         inv_points = exp_map(points, points_theta)
 
         ######NEED TO change this if want to show other (0 for delete x, 1 for y, 2 for z)#######
-        inv_set = np.delete(inv_points,1,0) # we want to show x-z, delete y
+        inv_points = np.delete(inv_points,2,0) # we want to show x-z, delete y
+
+        inv_set = [[],[]]
+        ang = np.linspace(0, np.pi, 10)
+        for theta in ang:
+            inv_set1 = rotate_point(inv_points, theta) # it only gives you x and y
+            inv_set = np.append(inv_set, inv_set1, axis = 1) 
             
         P2 = Polytope(inv_set.T) 
         
@@ -78,10 +89,9 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
 def plot_flowpipes(nom, flowpipes, n):
     # flow pipes
     plt.figure(figsize=(15,15))
-    ax = plt.subplot(111)
-    h_nom = ax.plot(nom[:,0], nom[:,1], color='k', linestyle='-')
+    h_nom = plt.plot(nom[:,0], nom[:,1], color='k', linestyle='-')
     for facet in range(n):
-        hs_ch_LMI = ax.plot(flowpipes[facet][:,0], flowpipes[facet][:,1], color='c', linestyle='--')
+        hs_ch_LMI = plt.plot(flowpipes[facet][:,0], flowpipes[facet][:,1], color='c', linestyle='--')
 
     # plt.axis('equal')
     plt.title('Flow Pipes')
