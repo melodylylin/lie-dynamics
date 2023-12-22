@@ -35,7 +35,6 @@ def control_law(B, K, e):
 
 def compute_control(t, y_vect, ref, freq_d, w1_mag, w2_mag, dist): # w1_mag: acceleration, w2_mag: omega
     # reference data (from planner, function of time)
-    # x_opt is t coeff of poly
     T_opt = ref['T0']
     T = np.cumsum(T_opt)
     xr = ref['anchor_x']
@@ -45,14 +44,12 @@ def compute_control(t, y_vect, ref, freq_d, w1_mag, w2_mag, dist): # w1_mag: acc
     for i in range(T.shape[0]):
         if i==0 and t <= T[i]:
             traj_x = np.array(bezier6['bezier6_traj'](t, ref['T0'][i], xr[i])).T
-            traj_y = np.array(bezier6['bezier6_traj'](t, ref['T0'][i], xr[i])).T
-            traj_z = np.array(bezier6['bezier6_traj'](t, ref['T0'][i], xr[i])).T
-            beta = t/T_opt[0]
+            traj_y = np.array(bezier6['bezier6_traj'](t, ref['T0'][i], yr[i])).T
+            traj_z = np.array(bezier6['bezier6_traj'](t, ref['T0'][i], zr[i])).T
         elif T[i-1] < t <= T[i]:
             traj_x = np.array(bezier6['bezier6_traj'](t-np.sum(T_opt[:i]), ref['T0'][i], xr[i])).T
-            traj_y = np.array(bezier6['bezier6_traj'](t-np.sum(T_opt[:i]), ref['T0'][i], xr[i])).T
-            traj_z = np.array(bezier6['bezier6_traj'](t-np.sum(T_opt[:i]), ref['T0'][i], xr[i])).T
-            beta = (t-np.sum(T_opt[:i]))/T_opt[i]
+            traj_y = np.array(bezier6['bezier6_traj'](t-np.sum(T_opt[:i]), ref['T0'][i], yr[i])).T
+            traj_z = np.array(bezier6['bezier6_traj'](t-np.sum(T_opt[:i]), ref['T0'][i], zr[i])).T
 
     # reference input at time t
     # world frame
@@ -222,7 +219,7 @@ def plot_sim(freq, ref, abound, omegabound, nom, flowpipes, num_pipes):
     plt.grid(True)
 
 
-    h_nom = plt.plot(nom[:,0], nom[:,1], color='k', linestyle='-')
+    # h_nom = plt.plot(nom[:,0], nom[:,1], color='k', linestyle='-')
     for facet in range(num_pipes):
         hs_ch_LMI = plt.plot(flowpipes[facet][:,0], flowpipes[facet][:,1], color='c', linestyle='--')
 
@@ -233,8 +230,8 @@ def plot_sim(freq, ref, abound, omegabound, nom, flowpipes, num_pipes):
     lgd = plt.legend(loc=2, prop={'size': 18})
     ax = lgd.axes
     handles, labels = ax.get_legend_handles_labels()
-    handles.append(h_nom[0])
-    labels.append('Reference Trajectory')
+    # handles.append(h_nom[0])
+    # labels.append('Reference Trajectory')
     handles.append(hs_ch_LMI[0])
     labels.append('Flow Pipes')
     lgd._legend_box = None
