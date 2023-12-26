@@ -13,12 +13,12 @@ def rotate_point(point, angle):
 
 def flowpipes(ref, n, beta, w1, omegabound, sol):
 
-    x_r = ref['traj_x']
-    y_r = ref['traj_y']
-    z_r = ref['traj_z']
+    x_r = ref['x']
+    y_r = ref['y']
+    z_r = ref['z']
     
     #####NEED to change this if wants to show different axis#####
-    nom = np.array([x_r,y_r]).T
+    nom = np.array([x_r,z_r]).T
 
     flowpipes = []
     intervalhull = []
@@ -59,7 +59,7 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
         inv_points = exp_map(points, points_theta)
 
         ######NEED TO change this if want to show other (0 for delete x, 1 for y, 2 for z)#######
-        inv_points = np.delete(inv_points,2,0) # we want to show x-z, delete y
+        inv_points = np.delete(inv_points,1,0) # we want to show x-z, delete y
 
         inv_set = [[],[]]
         ang = np.linspace(0, np.pi, 10)

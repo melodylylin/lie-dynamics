@@ -90,7 +90,7 @@ def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, verbosity=0):
     if verbosity > 0:
         print('line search')
     # we perform a line search over alpha to find the feasible solution for LMIs
-    alpha_list = np.linspace(0.4,0.6,21)
+    alpha_list = np.linspace(0.5,0.8,31)
     for a in alpha_list:
         print(a)
         
@@ -110,7 +110,7 @@ def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, verbosity=0):
     return sol
 
 def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: a # w2_norm: omega  
-    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.01 # V(t)
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t))) # V(t)
     # 1 = xT(P/V(t))x, equation for the ellipse
     P1 = sol['P']/val
     A1 = P1[:6,:6]
@@ -137,7 +137,7 @@ def se23_invariant_set_points_theta(sol, t, w1_norm, w2_norm, beta): # w1_norm: 
     return R@points, val
 
 def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: a, w2_norm: omega
-    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.01 # V(t)
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t))) # V(t)
     # 1 = xT(P/V(t))x, equation for the ellipse
     P1 = sol['P']/val
     A1 = P1[:3,:3]
