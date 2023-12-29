@@ -328,7 +328,7 @@ def plot_timehis(sol_LMI, ref, abound, omegabound, n_time, ebeta):
         ib[5] = rz + ib[5]
         invbound[:,j] = ib
 
-    freq = [0.01] #[0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
+    freq = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
     label_added =False
     for f in freq:
         res = simulate_rover(ref, f, abound, omegabound, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'sine')

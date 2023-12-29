@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "lie-dynamics"
+version = "0.1.0"
+description = ""
+authors = ["Li-Yu Lin <lin1191@purdue.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10,<3.13"
+numpy = "^1.24.2"
+casadi = {version = "^3.5.6rc2", allow-prereleases = true}
+sympy = "^1.11.1"
+beartype = "^0.14.0"
+scipy = "^1.11.1"
+pydot = "^1.4.2"
+pytope = "^0.0.4"
+picos = "^2.4.17"
+control = "^0.9.4"
+
+[tool.poetry.group.dev.dependencies]
+black = {extras = ["jupyter"], version = "^23.7.0"}
+coverage = {extras = ["toml"], version = "^7.1.0"}
+flake8 = "^6.0.0"
+flake8-pyproject = "^1.2.2"
+ipykernel = "^6.21.1"
+jupyter = "^1.0.0"
+jupyter-client = "^8.3.0"
+jupyter-console = "^6.6.3"
+jupyter-core = "^5.3.1"
+jupyterlab = "^3.6.3"
+lark = "^1.1.6"
+matplotlib = "^3.7.2"
+mypy = "^1.0.0"
+pre-commit = "^3.0.4"
+pylint = "^2.16.1"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+snakeviz = "^2.1.1"
+nbmake = "^1.4.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*", "tests/*"]
+
+[tool.coverage.report]
+fail_under = 79
+exclude_also = [
+	"pass",
+	"raise NotImplementedError"
+]
+
+[tool.flake8]
+ignore = ['E231', 'E241']
+per-file-ignores = [
+    '__init__.py:F401',
+]
+max-line-length = 88
+count = true
