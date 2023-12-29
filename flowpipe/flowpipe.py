@@ -11,14 +11,17 @@ def rotate_point(point, angle):
                        point[0] * np.sin(angle) + point[1] * np.cos(angle)])
     return new_point 
 
-def flowpipes(ref, n, beta, w1, omegabound, sol):
+def flowpipes(ref, n, beta, w1, omegabound, sol, axis):
 
     x_r = ref['x']
     y_r = ref['y']
     z_r = ref['z']
     
     #####NEED to change this if wants to show different axis#####
-    nom = np.array([x_r,z_r]).T
+    if axis == 'xy':
+        nom = np.array([x_r,y_r]).T
+    elif axis == 'xz':
+        nom = np.array([x_r,z_r]).T
 
     flowpipes = []
     intervalhull = []
@@ -59,7 +62,10 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
         inv_points = exp_map(points, points_theta)
 
         ######NEED TO change this if want to show other (0 for delete x, 1 for y, 2 for z)#######
-        inv_points = np.delete(inv_points,1,0) # we want to show x-z, delete y
+        if axis == 'xy':
+            inv_points = np.delete(inv_points,2,0) # we want to show x-z, delete y
+        elif axis == 'xz': 
+            inv_points = np.delete(inv_points,1,0) # we want to show x-z, delete y
 
         inv_set = [[],[]]
         ang = np.linspace(0, np.pi, 10)
@@ -86,7 +92,7 @@ def flowpipes(ref, n, beta, w1, omegabound, sol):
         a = b
     return flowpipes, intervalhull, nom, t_vect
 
-def plot_flowpipes(nom, flowpipes, n):
+def plot_flowpipes(nom, flowpipes, n, axis):
     # flow pipes
     plt.figure(figsize=(15,15))
     h_nom = plt.plot(nom[:,0], nom[:,1], color='k', linestyle='-')
@@ -95,8 +101,11 @@ def plot_flowpipes(nom, flowpipes, n):
 
     # plt.axis('equal')
     plt.title('Flow Pipes')
+    if axis == 'xy':
+        plt.ylabel('y')
+    elif axis == 'xz':
+        plt.ylabel('z')
     plt.xlabel('x')
-    plt.ylabel('z')
     lgd = plt.legend(loc=2, prop={'size': 18})
     ax = lgd.axes
     handles, labels = ax.get_legend_handles_labels()

@@ -175,7 +175,7 @@ def compute_exp_log_err(rx, ry, rz, rvx, rvy, rvz, rtheta1, rtheta2, rtheta3, ex
     x_vect = np.array(x_vect).reshape(9,)
     return x_vect
 
-def plot_sim(ref, abound, omegabound, flowpipes, num_pipes):
+def plot_sim(ref, abound, omegabound, flowpipes, num_pipes, axis):
     freq = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
 
     fig = plt.figure(figsize=(15,15))
@@ -250,15 +250,26 @@ def plot_sim(ref, abound, omegabound, flowpipes, num_pipes):
                                                              ex[j], ey[j], ez[j], evx[j], evy[j], evz[j], etheta1[j], etheta2[j], etheta3[j])])
             # exp_log_errsq[:,j] = np.array([compute_exp_log_err(r_x, r_y, r_z, r_vx, r_vy, r_vz, r_theta1, r_theta2, r_theta3,
             #                                                 exsq[j], eysq[j], ezsq[j], evxsq[j], evysq[j], evzsq[j], etheta1sq[j], etheta2sq[j], etheta3sq[j])])
-    
-        if not label_added:
-            plt.plot(exp_log_err[0,:], exp_log_err[2,:], 'g', label='sim',linewidth=0.7)
-            label_added = True
-        else:
-            plt.plot(exp_log_err[0,:], exp_log_err[2,:], 'g',linewidth=0.7)
+        if axis == 'xy':
+            if not label_added:
+                plt.plot(exp_log_err[0,:], exp_log_err[1,:], 'g', label='sim',linewidth=0.7)
+                label_added = True
+            else:
+                plt.plot(exp_log_err[0,:], exp_log_err[1,:], 'g',linewidth=0.7)
+        elif axis == 'xz':
+            if not label_added:
+                plt.plot(exp_log_err[0,:], exp_log_err[2,:], 'g', label='sim',linewidth=0.7)
+                label_added = True
+            else:
+                plt.plot(exp_log_err[0,:], exp_log_err[2,:], 'g',linewidth=0.7)
             
-
-    plt.plot(ref['x'], ref['z'], 'r--', label='ref')
+    if axis == 'xy':
+        plt.plot(ref['x'], ref['y'], 'r--', label='ref')
+        plt.ylabel('y')
+    elif axis == 'xz':
+        plt.plot(ref['x'], ref['z'], 'r--', label='ref')
+        plt.ylabel('z')
+    plt.xlabel('x')
     plt.grid(True)
 
 

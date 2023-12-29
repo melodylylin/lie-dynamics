@@ -90,7 +90,7 @@ def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, verbosity=0):
     if verbosity > 0:
         print('line search')
     # we perform a line search over alpha to find the feasible solution for LMIs
-    alpha_list = np.linspace(0.5,0.8,31)
+    alpha_list = np.linspace(0.4,0.8,41)
     for a in alpha_list:
         print(a)
         
