@@ -81,7 +81,7 @@ def find_se23_invariant_set(ax,ay,az,omega1,omega2,omega3, verbosity=0):
         ay = nui[4]
         az = nui[5]
 
-        B_lie, K, BK, _ = se23_solve_control(0, 0, -9.8, 0, 0, 0)
+        B_lie, K, BK, _ = se23_solve_control(0, 0, 9.8, 0, 0, 0)
         A0 = -ca.DM(SE23Dcm.ad_matrix(np.array([0,0,0,ax,ay,az,omega1,omega2,omega3]))+SE23Dcm.adC_matrix())
         Ai = np.array(A0+BK)
         A.append(Ai)
