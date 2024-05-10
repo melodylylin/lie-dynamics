@@ -28,7 +28,6 @@ def se23_solve_control(ax,ay,az,omega1,omega2,omega3):
 def control_law(B, K, e):
     e = SE23Dcm.vee(e)
     u = SE23Dcm.diff_correction_inv(e)@B@K@e # controller input
-    # print(u)
     return u
 
 def compute_control(t, y_vect, ref, freq_d, w1_mag, w2_mag, dist): # w1_mag: acceleration, w2_mag: omega

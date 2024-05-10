@@ -163,6 +163,43 @@ def se23_invariant_set_points(sol, t, w1_norm, w2_norm, beta): # w1_norm: a, w2_
     points = np.array(points).T
     return R@points, val
 
+def se23_invariant_set_points_v(sol, t, w1_norm, w2_norm, beta): # w1_norm: a, w2_norm: omega
+    val = np.real(beta*np.exp(-sol['alpha']*t) + (sol['mu2']*w1_norm**2 + sol['mu3']*w2_norm**2)*(1-np.exp(-sol['alpha']*t)))+0.01 # V(t)
+    # 1 = xT(P/V(t))x, equation for the ellipse
+    P = sol['P']
+    P1 = P[:3, :3]
+    P2 = P[:3, 3:6]
+    P3 = P[:3, 6:]
+    P4 = P[3:6, :3]
+    P5 = P[3:6, 3:6]
+    P6 = P[3:6, 6:]
+    P7 = P[6:, :3]
+    P8 = P[6:, 3:6]
+    P9 = P[6:, 6:]
+    Pnew = np.vstack((np.hstack((P1, P3, P2)), np.hstack((P7, P9, P8)), np.hstack((P4, P6, P5))))
+    A1 = Pnew[:6,:6]
+    B1 = Pnew[:6,6:]
+    C1 = Pnew[6:,:6]
+    D1 = Pnew[6:,6:]
+    P = A1-B1@np.linalg.inv(D1)@C1
+    
+    evals, evects = np.linalg.eig(P)
+    radii = 1/np.sqrt(evals)
+    R = evects@np.diag(radii)
+    R = np.real(R)
+    
+    # draw sphere
+    points = []
+    n = 30
+    for u in np.linspace(0, 2*np.pi, n):
+        for v in np.linspace(0, 2*np.pi, 2*n):
+            points.append([np.cos(u)*np.sin(v), np.sin(u)*np.sin(v), np.cos(v)])
+    for v in np.linspace(0, 2*np.pi, 2*n):
+        for u in np.linspace(0, 2*np.pi, n):
+            points.append([np.cos(u)*np.sin(v), np.sin(u)*np.sin(v), np.cos(v)])
+    points = np.array(points).T
+    return R@points, val
+
 def exp_map(points, points_theta):
     inv_points = np.zeros((6,points.shape[1]))
     for i in range(points.shape[1]):
